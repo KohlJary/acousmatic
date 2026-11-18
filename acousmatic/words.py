@@ -120,10 +120,19 @@ def words(tags: dict, duration: float, sha: str, lead=None, sr=None, offline=Fal
     wt = word_times(got.get("lyricsfile") or "")
     if wt:
         # word timings exist: attach each line's words (matched by start time)
+        # match each line to its word-synced twin by its words (then by time): the two
+        # timings can differ by more than a second on the same line
+        norm = lambda x: re.sub(r"[^a-z0-9]+", " ", x.lower()).strip()
+        used = set()
         for l in lines:
-            m = min(wt, key=lambda x: abs(x["start"] - l["start"]))
-            if abs(m["start"] - l["start"]) < 0.6:
-                l["words"] = [dict(w) for w in m["words"]]
+            same = [i for i, x in enumerate(wt) if i not in used and norm(x["text"]) == norm(l["text"])
+                    and abs(x["start"] - l["start"]) < 4.0]
+            if not same:
+                same = [i for i, x in enumerate(wt) if i not in used and abs(x["start"] - l["start"]) < 0.6]
+            if same:
+                i = min(same, key=lambda i: abs(wt[i]["start"] - l["start"]))
+                used.add(i)
+                l["words"] = [dict(w) for w in wt[i]["words"]]
     if not lines:
         return {"source": "lrclib (unsynced)", "lines": [], "plain": got.get("plainLyrics") or ""}
     off = align(lines, lead, sr) if lead is not None else 0.0
