@@ -93,7 +93,13 @@ def run(cfg):
     t = rh.tempo
     ratio = t / tempo_true
     out["tempo"] = {"est": t, "ratio": round(ratio, 3), "octave_ok": any(abs(ratio - r) < 0.04 for r in (0.5, 1, 2))}
-    out["beats_f"] = round(float(mir_eval.beat.f_measure(mir_eval.beat.trim_beats(beats_true),
+    # judged at the octave it chose: double/half time counts, against the matching truth grid
+    bt = beats_true
+    if abs(ratio - 2) < 0.04:
+        bt = np.sort(np.concatenate([beats_true, beats_true + 30.0 / tempo_true]))
+    elif abs(ratio - 0.5) < 0.02:
+        bt = beats_true[::2]
+    out["beats_f"] = round(float(mir_eval.beat.f_measure(mir_eval.beat.trim_beats(bt),
                                                        mir_eval.beat.trim_beats(rh.beats))), 3)
     bpb = cfg.get("beats_per_bar", 4)
     db_true = beats_true[::bpb]

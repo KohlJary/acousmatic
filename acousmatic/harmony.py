@@ -87,6 +87,9 @@ def chords(harm, bass, beat_frames, self_prob=0.85):
     sim = TEMPLATES @ X                                   # (labels, beats)
     bass_root = np.array([Bs[r[0]] / (Bs.max(axis=0) + 1e-9) for r in LABELS])
     sim = sim + 0.15 * bass_root
+    # A power chord only when the third is really absent: two-note templates match
+    # any triad on the same root, so they start a little behind.
+    sim = sim - 0.06 * np.array([len(QUALITIES[q]) < 3 for _, q in LABELS])[:, None]
     flat = 1.0 - (X.max(axis=0) - X.mean(axis=0))         # flat chroma -> no clear chord
     quiet = energy < 0.05 * (energy.max() + 1e-9)
     nochord = np.where(quiet | (flat > 0.85), 1.0, 0.0)

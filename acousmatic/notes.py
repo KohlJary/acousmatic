@@ -21,17 +21,43 @@ def _snap(t, grid):
     return i
 
 
-def line(y, fmin, fmax, grid, frame_length=2048, min_dur=0.08, vthresh=0.5):
+def _onset_frames(y, lo=None, hi=None):
+    """Note starts in a stem: rises in its linear energy (in a band, if given)."""
+    S = np.abs(librosa.stft(y, n_fft=1024, hop_length=HOP_P))
+    f = librosa.fft_frequencies(sr=SR, n_fft=1024)
+    rows = np.ones(len(f), bool) if lo is None else (f >= lo) & (f < hi)
+    env = _flux(S, rows)
+    on = librosa.onset.onset_detect(onset_envelope=env, sr=SR, hop_length=HOP_P, units="frames",
+                                    delta=0.08, wait=4, normalize=False)
+    return set(int(x) for x in on)
+
+
+def line(y, fmin, fmax, grid, frame_length=2048, min_dur=0.08, vthresh=0.1, onset_band=None):
+    """A monophonic line: pYIN pitch, its voiced/unvoiced decision (a distorted bass is
+    voiced with low confidence, so the floor is low), lightly smoothed, split into notes
+    where the pitch moves a semitone or a new onset starts."""
     f0, voiced, vprob = librosa.pyin(y, fmin=fmin, fmax=fmax, sr=SR, frame_length=frame_length, hop_length=HOP_P)
     times = librosa.times_like(f0, sr=SR, hop_length=HOP_P)
-    midi = librosa.hz_to_midi(np.where(voiced & (vprob >= vthresh), f0, np.nan))
+    keep = voiced & (vprob >= vthresh)
+    midi = librosa.hz_to_midi(np.where(keep, f0, np.nan))
+    # median-smooth voiced runs over 5 frames (about 60 ms)
+    sm = midi.copy()
+    for i in range(len(midi)):
+        w = midi[max(0, i - 2): i + 3]
+        w = w[~np.isnan(w)]
+        if not np.isnan(midi[i]) and len(w):
+            sm[i] = float(np.median(w))
+    midi = sm
+    onsets = _onset_frames(y, *(onset_band or (None, None)))
+    min_frames = int(min_dur * SR / HOP_P)
     notes, cur = [], None
-    for t, m, p in zip(times, midi, vprob):
+    for i, (t, m, p) in enumerate(zip(times, midi, vprob)):
         if np.isnan(m):
             if cur:
                 notes.append(cur); cur = None
             continue
-        if cur and abs(m - np.median(cur["pitches"])) <= 0.7:
+        new_onset = any(o in onsets for o in (i - 1, i, i + 1)) and cur and len(cur["pitches"]) >= min_frames // 2
+        if cur and not new_onset and abs(m - np.median(cur["pitches"])) <= 0.7:
             cur["pitches"].append(m); cur["probs"].append(p); cur["end"] = t
         else:
             if cur:
@@ -53,7 +79,6 @@ def line(y, fmin, fmax, grid, frame_length=2048, min_dur=0.08, vthresh=0.5):
                     "name": librosa.midi_to_note(pitch, unicode=False), "g0": a, "g1": b,
                     "confidence": round(float(np.mean(n["probs"])), 3),
                     "cents_off": int(round(100 * (float(np.median(n["pitches"])) - pitch)))})
-    # one note at a time per grid slot: later onsets cut earlier notes
     out.sort(key=lambda n: (n["g0"], -n["confidence"]))
     clean = []
     for n in out:
@@ -67,12 +92,12 @@ def line(y, fmin, fmax, grid, frame_length=2048, min_dur=0.08, vthresh=0.5):
 
 
 def lead_line(lead, grid):
-    return line(lead, fmin=librosa.note_to_hz("E2"), fmax=librosa.note_to_hz("C6"), grid=grid)
+    return line(lead, fmin=librosa.note_to_hz("E2"), fmax=librosa.note_to_hz("C6"), grid=grid, vthresh=0.2)
 
 
 def bass_line(bass, grid):
-    return line(bass, fmin=librosa.note_to_hz("B0"), fmax=librosa.note_to_hz("G3"), grid=grid,
-                frame_length=4096, min_dur=0.1, vthresh=0.4)
+    return line(bass, fmin=librosa.note_to_hz("A0"), fmax=librosa.note_to_hz("G3"), grid=grid,
+                frame_length=4096, min_dur=0.08, vthresh=0.05, onset_band=(30, 400))
 
 
 BANDS = {"kick": (30, 150), "snare": (1000, 5000), "hat": (6000, 11000)}
