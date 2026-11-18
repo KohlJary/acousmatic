@@ -67,6 +67,8 @@ def separate(stereo_hi: np.ndarray) -> Stems:
     # lead: harmonic, centre, non-repeating, in the voice band
     Mh = np.abs(M) * Hm
     width = int(librosa.time_to_frames(2.0, sr=SR, hop_length=HOP))
+    # a very short piece (a few seconds) can't hold a 2-second window on each side
+    width = max(1, min(width, (Mh.shape[-1] - 1) // 2 - 1))
     bg = librosa.decompose.nn_filter(Mh, aggregate=np.median, metric="cosine", width=width)
     bg = np.minimum(Mh, bg)
     fg_mask = librosa.util.softmask(Mh - bg, 2.0 * bg, power=2)
