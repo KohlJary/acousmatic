@@ -1,6 +1,6 @@
 [project]
 name = "acousmatic"
-version = "0.1.1"
+version = "0.1.2"
 description = "Deterministic listening: turn a recorded song into a time-ordered record of what is heard in it."
 requires-python = ">=3.11"
 license = "MIT"

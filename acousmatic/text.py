@@ -31,7 +31,8 @@ def _bar_rows(rec):
         ch = [c for c in spans if b["start"] - 1e-3 <= c["start"] < b["end"] - 1e-3]
         if not ch:
             ch = [c for c in spans if c["start"] <= b["start"]][-1:]
-        chords = " ".join(f"{c['name']} ({c['roman']}{', borrowed' if c.get('borrowed') else ''})" for c in ch)
+        chords = " ".join(f"{c['name']}{'' if c.get('clear', True) else '?'} ({c['roman']}{', borrowed' if c.get('borrowed') else ''}"
+                          f"{'' if c.get('clear', True) else ', unclear'})" for c in ch)
         ln = " ".join(f"{n['name']}@{_pos(n['g0'], g0)}" for n in lead if g0 <= n["g0"] < g1)
         bs = " ".join(f"{n['name']}@{_pos(n['g0'], g0)}" for n in bass if g0 <= n["g0"] < g1)
         dr = []
@@ -59,6 +60,11 @@ def render(rec):
     L.append("")
     k, mode = h["key"], h["mode"]
     lo = rec["loudness"]
+    spans = [c for c in h["chord_spans"] if c["name"] != "N"]
+    tot = sum(c["beats"] for c in spans) or 1
+    clear = sum(c["beats"] for c in spans if c.get("clear", True))
+    harmony_line = (f"- Harmony read clearly for {round(100 * clear / tot)}% of the song; chords marked ? fit their "
+                    "template poorly (a moving line, a dense or distorted texture) and are a guess")
     L.append("## At a glance")
     L.append(f"- Length {_mmss(src['duration'])}; {len(rh['bars'])} bars of {rh['meter']}/4 at about {rh['tempo']:.0f} BPM "
              f"(meter call: contrast {rh['meter_contrast'].get(rh['meter'])}; others {rh['meter_contrast']})")
@@ -66,8 +72,11 @@ def render(rec):
     if cb.get("before") or cb.get("after"):
         L.append(f"- Beats carried at the established tempo where the onsets were too quiet to track: "
                  f"{cb.get('before', 0)} at the start, {cb.get('after', 0)} at the end")
-    L.append(f"- Key {k['name']} (strength {k['strength']}, runner-up {k['runner_up']}, margin {k['margin']}); "
+    how = (f"the bass's home note decided it over {k['runner_up']}, which fits the chroma a little better"
+           if k.get("settled_by_bass") else f"runner-up {k['runner_up']}, margin {k['margin']}")
+    L.append(f"- Key {k['name']} (strength {k['strength']}, {how}); "
              f"best-fitting mode {mode['best']} (fit {mode['fit']})")
+    L.append(harmony_line)
     L.append(f"- Loudness {lo['integrated_lufs']} LUFS, peak {lo['peak_dbfs']} dBFS, crest {lo['crest_db']} dB")
     L.append(f"- Form: {' '.join(s['label'] for s in rec['form']['sections'])}")
     lg = rec["form"].get("large") or []

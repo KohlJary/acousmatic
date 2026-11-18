@@ -75,6 +75,12 @@ def listen(path, out_dir, keep_stems=False, engrave=True, log=print, offline=Fal
     log(f"words: {len(wd.get('lines', []))} lines ({wd.get('source')})")
 
     # spell everything by the key: flats in flat keys, sharps in sharp ones
+    # settle the key by where the bass dwells (relative major/minor are near-ties on chroma)
+    bw = np.zeros(12)
+    for n in bass_notes:
+        bw[n["midi"] % 12] += n["end"] - n["start"]
+    if bw.sum() > 0:
+        k = harmony.key_of(Cs.sum(axis=1), bass_weights=bw)
     names, tonic = harmony.spelling(k["tonic_pc"], k["mode"])
     k["tonic"], k["name"] = tonic, f"{tonic} {k['mode']}"
     for c in spans:

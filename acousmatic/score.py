@@ -53,7 +53,7 @@ def build(rec, out: Path):
             continue
         try:
             import re as _re
-            cs = harmony.ChordSymbol(_re.sub(r"^([A-G])b", r"\1-", c["name"]))
+            cs = harmony.ChordSymbol(_re.sub(r"(^|/)([A-G])b", r"\1\2-", c["name"]))
             cs.writeAsChord = False
             lead.insert(float(off), cs)
         except Exception:
