@@ -168,8 +168,14 @@ def roles(segs, energy):
     if repeated:
         ranked = sorted(repeated, key=lambda k: (-mean[k], -count[k]))
         chorus = ranked[0]
+        if len(ranked) > 1 and mean[ranked[0]] - mean[ranked[1]] < 1.0:
+            # about as loud as each other (some verses are): the type heard last, before the ending, is the chorus
+            last = {k: max(i for i, x in enumerate(labs[:-1] or labs) if x == k) if k in labs[:-1] else -1
+                    for k in ranked[:2]}
+            chorus = max(ranked[:2], key=lambda k: last[k])
         role[chorus] = "chorus"
-        margin = mean[chorus] - (mean[ranked[1]] if len(ranked) > 1 else med)
+        other = [k for k in ranked if k != chorus]
+        margin = mean[chorus] - (mean[other[0]] if other else med)
         conf[chorus] = "high" if margin >= 2 else "medium" if margin >= 0.75 else "low"
     if chorus:
         before = Counter(labs[i - 1] for i in range(1, len(labs)) if labs[i] == chorus and labs[i - 1] != chorus)
@@ -179,7 +185,7 @@ def roles(segs, energy):
                 lens = [s["bars"] for s in segs if s["label"] == k]
                 prev = Counter(labs[i - 1] for i in range(1, len(labs)) if labs[i] == k)
                 feeder = next((p for p, _ in prev.most_common() if p in repeated and p not in (chorus, k)), None)
-                if max(lens) <= 4 and feeder:
+                if max(lens) <= 4 and feeder and labs[0] != k:
                     role[k], conf[k] = "pre-chorus", "medium"
                     role[feeder], conf[feeder] = "verse", "medium" if n >= 2 else "low"
                 else:
@@ -205,14 +211,23 @@ def roles(segs, energy):
                 if count[k] == 1 and role[k] == "?":
                     role[k], conf[k] = "bridge", "medium"
     last_chorus = max((i for i, x in enumerate(labs) if x == chorus), default=None) if chorus else None
+    # the ending: sections after the last chorus, counted back from the end, up to ~16 bars
+    tail, acc = set(), 0
+    for i in range(len(segs) - 1, (last_chorus if last_chorus is not None else len(segs) - 2), -1):
+        acc += segs[i]["bars"]
+        if acc > 16 and tail:
+            break
+        tail.add(i)
     out = []
     for i, s in enumerate(segs):
         k = s["label"]
         r, c = role[k], conf[k]
         if i == len(segs) - 1 and (k + "@end") in role:
             r, c = role[k + "@end"], "medium"
-        elif r == "?" and last_chorus is not None and i > last_chorus:
-            r, c = "outro", "low"   # whatever follows the last chorus is the song ending
+        elif r == "intro" and i > 0:
+            r, c = ("outro (intro returns)" if i in tail else "interlude (intro returns)"), "medium"
+        elif r == "?" and i in tail:
+            r, c = "outro", "low"
         out.append({**s, "role": r, "role_confidence": c})
     return out
 
