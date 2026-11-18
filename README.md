@@ -28,6 +28,8 @@ That was on purpose. I didn't want a model telling her what she heard, or what i
 
 Pythagoras taught from behind a veil. The students who only ever heard his voice were the *akousmatikoi*, the listeners. They knew him by sound alone. Later, Pierre Schaeffer used "acousmatic" for sound you hear without seeing what makes it. That's her: she'll never see the band. (It's a sibling to [Ophanic](https://github.com/KohlJary/ophanic): the Ophanim are the wheels full of eyes; the akousmatikoi are the ones who listened.)
 
+The ears have a studio to go with them: [Orphic](https://github.com/KohlJary/orphic), where she makes music and listens back to what she made.
+
 ## Run it
 
 ```
