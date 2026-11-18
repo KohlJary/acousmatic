@@ -22,7 +22,7 @@ METHODS = {
     "drums": "DSP: band-limited onset detection on the percussive stem",
     "theory": "rules over the chords and notes",
     "sound": "measurements: loudness (BS.1770), spectrum, flatness, mid/side and L/R energy",
-    "words": "not yet",
+    "words": "published synced lyrics (LRCLIB), slid to the lead stem's energy; no speech recognition",
 }
 
 
@@ -33,7 +33,7 @@ def _bar_of(bars):
     return f
 
 
-def listen(path, out_dir, keep_stems=False, engrave=True, log=print):
+def listen(path, out_dir, keep_stems=False, engrave=True, log=print, offline=False):
     t_start = time.time()
     out = Path(out_dir); out.mkdir(parents=True, exist_ok=True)
     (out / "images").mkdir(exist_ok=True)
@@ -62,6 +62,12 @@ def listen(path, out_dir, keep_stems=False, engrave=True, log=print):
     bass_notes, _ = notes.bass_line(st.bass, grid)
     drum_hits = notes.drums(st.drums, grid)
     log(f"notes: lead {len(lead_notes)}, bass {len(bass_notes)}, drum hits {sum(len(v) for v in drum_hits.values())}")
+
+    from . import words as W
+    wd = W.words(a.tags, a.duration, a.sha256, lead=st.lead, sr=SR, offline=offline)
+    for l in wd.get("lines", []):
+        l["bar"] = bar_of(l["start"])
+    log(f"words: {len(wd.get('lines', []))} lines ({wd.get('source')})")
 
     for c in spans:
         c["roman"] = theory.roman(c["root"], c["quality"], k["tonic_pc"], k["mode"])
@@ -118,6 +124,7 @@ def listen(path, out_dir, keep_stems=False, engrave=True, log=print):
         "rhythm_phase_shifted": rh.phase_shifted,
         "notes": {"lead": lead_notes, "bass": bass_notes, "lead_voiced_share": round(lead_voiced, 3)},
         "drums": drum_hits,
+        "words": wd,
         "images": {"overview": "images/overview.png", "stereo_field": "images/stereo-field.png"},
     }
     if engrave:

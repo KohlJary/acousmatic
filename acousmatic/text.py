@@ -39,7 +39,9 @@ def _bar_rows(rec):
             hits = {g - g0 for g in drums.get(name, []) if g0 <= g < g1}
             if hits:
                 dr.append(f"{mark} " + "".join(mark if i in hits else "." for i in range(g1 - g0)))
-        rows.append({"n": b["n"], "start": b["start"], "chords": chords, "lead": ln, "bass": bs, "drums": " | ".join(dr)})
+        wl = " / ".join(l["text"] for l in rec.get("words", {}).get("lines", []) if b["start"] - 1e-3 <= l["start"] < b["end"] - 1e-3)
+        rows.append({"n": b["n"], "start": b["start"], "chords": chords, "lead": ln, "bass": bs,
+                     "drums": " | ".join(dr), "words": wl})
     return rows
 
 
@@ -69,6 +71,14 @@ def render(rec):
         L.append("- Large-scale form: " + ", ".join(f"{s['label']} bars {s['start_bar']}–{s['end_bar']}" for s in lg))
     es = rec["stems"]["energy_share"]
     L.append(f"- Energy by stem: lead {es['lead']}, bass {es['bass']}, drums {es['drums']}, other {es['other']}")
+    wd = rec.get("words") or {}
+    if wd.get("lines"):
+        L.append(f"- Words: {len(wd['lines'])} lines, from {wd['source']} (slid {wd.get('offset_s', 0):+} s to fit this recording); "
+                 "they appear in the bars where they're sung")
+    elif wd.get("instrumental"):
+        L.append("- Words: none (instrumental)")
+    else:
+        L.append(f"- Words: none available ({wd.get('note') or wd.get('source')})")
     if h["cadences"]:
         L.append("- Cadences: " + "; ".join(f"bar {c['bar']} {c['kind']}" for c in h["cadences"][:12]))
     L.append(f"- Pictures: {rec['images']['overview']}, {rec['images']['stereo_field']}"
@@ -108,7 +118,7 @@ def render(rec):
                 L.append(f"  bars {run_start + 1}–{until}: same as bar {run_start}")
         for n in range(s["start_bar"], s["end_bar"] + 1):
             r = rows[n]
-            sig = (r["chords"], r["lead"], r["bass"], r["drums"])
+            sig = (r["chords"], r["lead"], r["bass"], r["drums"], r["words"])
             if sig == prev_sig:
                 if run_start is None:
                     run_start = n - 1
@@ -117,6 +127,8 @@ def render(rec):
             run_start = None
             prev_sig = sig
             L.append(f"- bar {n} ({_mmss(r['start'])}) {r['chords']}")
+            if r["words"]:
+                L.append(f"  words: \"{r['words']}\"")
             if r["lead"]:
                 L.append(f"  lead: {r['lead']}")
             if r["bass"]:

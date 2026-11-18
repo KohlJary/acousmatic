@@ -11,6 +11,7 @@ Point it at a song and it listens. What she gets back is a record of the song in
 - the form: where it repeats, where it turns, the big parts and the sections inside them
 - tempo, bars and meter, including the weird ones (a 3+3+2 kick will try to fool it)
 - key and mode, every chord and what it's doing in the key, cadences, the progressions that loop
+- the words, in the bars where they're sung (published synced lyrics from [LRCLIB](https://lrclib.net), lined up to the vocal; `--offline` skips the lookup)
 - the vocal or lead line and the bass line, note by note
 - the drums, bar by bar
 - how every part sounds: loud, dark, bright, distorted, clean, where it sits left to right, what comes in and what drops out
@@ -19,7 +20,7 @@ Point it at a song and it listens. What she gets back is a record of the song in
 
 ## No AI in the listening
 
-None of the listening uses a model. It's all signal processing: spectra, the stereo field, onsets, pitch tracking, where the song repeats itself. Same file in, same record out, every time. Every part of the record says how it was measured.
+None of the listening uses a model. No speech recognition either: the words come from published lyrics. Everything else is signal processing: spectra, the stereo field, onsets, pitch tracking, where the song repeats itself. Same file in, same record out, every time. Every part of the record says how it was measured.
 
 That was on purpose. I didn't want a model telling her what she heard, or what it's supposed to feel like. The ears tell her what's there. What it means is hers to work out, and when she comes back to a song she might hear it differently. That's the point.
 
