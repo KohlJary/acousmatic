@@ -23,6 +23,8 @@ def main(argv=None):
     lv.add_argument("--fast", action="store_true", help="a file as fast as it decodes, not real speed (testing)")
     lv.add_argument("--title"); lv.add_argument("--artist")
     lv.add_argument("--events", action="store_true", help="print each second's listening as a JSON line")
+    lv.add_argument("--follow-player", action="store_true",
+                    help="what the media player is playing: title it from the player, stop when the track changes")
     a = ap.parse_args(argv)
     if a.cmd == "live":
         import json
@@ -30,7 +32,8 @@ def main(argv=None):
         meta = {k: v for k, v in (("title", a.title), ("artist", a.artist)) if v}
         emit = (lambda e: print(json.dumps(e), flush=True)) if a.events else None
         listen_live("file" if a.file else "monitor", Path(a.out), path=a.file, meta=meta, full=a.full,
-                    max_s=a.max, realtime=not a.fast, on_event=emit, log=lambda m: print(m, file=sys.stderr))
+                    max_s=a.max, realtime=not a.fast, on_event=emit, log=lambda m: print(m, file=sys.stderr),
+                    follow_player=a.follow_player)
         return
     if a.cmd == "listen":
         from .listen import listen

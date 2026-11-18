@@ -250,13 +250,37 @@ def stream(source: str, path: Optional[str] = None, realtime: bool = True, block
         p.kill()
 
 
+def now_playing(player: Optional[str] = None) -> Optional[Dict]:
+    """What a media player says is playing (MPRIS, via playerctl): artist, title, album, player."""
+    import subprocess
+    args = ["playerctl"] + (["-p", player] if player else []) + [
+        "metadata", "--format", "{{playerName}}\t{{status}}\t{{artist}}\t{{title}}\t{{album}}"]
+    try:
+        out = subprocess.run(args, capture_output=True, text=True, timeout=3).stdout.strip()
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    parts = out.split("\t")
+    if len(parts) < 5 or parts[1].lower() != "playing":
+        return None
+    return {"player": parts[0], "artist": parts[2], "title": parts[3], "album": parts[4]}
+
+
 def listen_live(source: str, out_dir: Path, path: Optional[str] = None, meta: Optional[Dict] = None,
                 full: bool = False, max_s: Optional[float] = None, quiet_end_s: float = 8.0,
-                realtime: bool = True, on_event=None, log=print) -> Dict:
+                realtime: bool = True, on_event=None, log=print, follow_player: bool = False) -> Dict:
     ears = LiveEars(emit=on_event, full=full)
     quiet = 0.0
     t0 = time.time()
+    playing = now_playing() if follow_player else None
+    if follow_player:
+        meta = {**(meta or {}), **{k: v for k, v in (playing or {}).items() if v}}
+    last_check = 0.0
     for block in stream(source, path, realtime=realtime):
+        if follow_player and ears.t - last_check >= 2.0:
+            last_check = ears.t
+            now = now_playing()
+            if playing and (not now or now.get("title") != playing.get("title")):
+                break   # the track changed or stopped: this song is over
         ears.feed(block)
         lvl = 20 * np.log10(np.sqrt(np.mean(block ** 2)) + 1e-12)
         quiet = quiet + block.shape[1] / SR_HI if lvl < -55 else 0.0
