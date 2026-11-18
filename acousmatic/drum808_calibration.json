@@ -1,0 +1,295 @@
+{
+ "decay": {
+  "0.0": 0.07383584133572099,
+  "2.5": 0.22621858386815918,
+  "5.0": 0.8264688724683166,
+  "7.5": 1.3635308460440712,
+  "10.0": 2.509903211248795
+ },
+ "tone": {
+  "0.0": 0.0294,
+  "2.5": 0.0326,
+  "5.0": 0.0429,
+  "7.5": 0.05,
+  "10.0": 0.0561
+ },
+ "f0": 51.405,
+ "overtones_db": -29.0,
+ "rows": [
+  {
+   "file": "BD0000.WAV",
+   "tone": 0.0,
+   "decay": 0.0,
+   "decay40_s": 0.07383584133572099,
+   "click": 0.0283,
+   "f0_hz": null,
+   "f0_early_hz": null,
+   "overtones_db": null,
+   "length_s": 0.25
+  },
+  {
+   "file": "BD0010.WAV",
+   "tone": 0.0,
+   "decay": 10.0,
+   "decay40_s": 2.515351891627716,
+   "click": 0.0281,
+   "f0_hz": 52.6,
+   "f0_early_hz": null,
+   "overtones_db": -22.8,
+   "length_s": 3.0
+  },
+  {
+   "file": "BD0025.WAV",
+   "tone": 0.0,
+   "decay": 2.5,
+   "decay40_s": 0.23564613780305932,
+   "click": 0.031,
+   "f0_hz": 50.52,
+   "f0_early_hz": null,
+   "overtones_db": -49.6,
+   "length_s": 0.5
+  },
+  {
+   "file": "BD0050.WAV",
+   "tone": 0.0,
+   "decay": 5.0,
+   "decay40_s": 0.6475007307584655,
+   "click": 0.0295,
+   "f0_hz": 50.84,
+   "f0_early_hz": null,
+   "overtones_db": -39.2,
+   "length_s": 1.5
+  },
+  {
+   "file": "BD0075.WAV",
+   "tone": 0.0,
+   "decay": 7.5,
+   "decay40_s": 1.3203915852894381,
+   "click": 0.0294,
+   "f0_hz": 51.65,
+   "f0_early_hz": null,
+   "overtones_db": -27.1,
+   "length_s": 2.0
+  },
+  {
+   "file": "BD1000.WAV",
+   "tone": 10.0,
+   "decay": 0.0,
+   "decay40_s": 0.07354393283731393,
+   "click": 0.0559,
+   "f0_hz": null,
+   "f0_early_hz": null,
+   "overtones_db": null,
+   "length_s": 0.25
+  },
+  {
+   "file": "BD1010.WAV",
+   "tone": 10.0,
+   "decay": 10.0,
+   "decay40_s": 2.5051665150240967,
+   "click": 0.0557,
+   "f0_hz": 52.57,
+   "f0_early_hz": null,
+   "overtones_db": -22.4,
+   "length_s": 3.0
+  },
+  {
+   "file": "BD1025.WAV",
+   "tone": 10.0,
+   "decay": 2.5,
+   "decay40_s": 0.2390016626217497,
+   "click": 0.0583,
+   "f0_hz": 50.57,
+   "f0_early_hz": null,
+   "overtones_db": -49.6,
+   "length_s": 0.5
+  },
+  {
+   "file": "BD1050.WAV",
+   "tone": 10.0,
+   "decay": 5.0,
+   "decay40_s": 0.8264688724683166,
+   "click": 0.0561,
+   "f0_hz": 50.96,
+   "f0_early_hz": null,
+   "overtones_db": -34.1,
+   "length_s": 1.5
+  },
+  {
+   "file": "BD1075.WAV",
+   "tone": 10.0,
+   "decay": 7.5,
+   "decay40_s": 1.3635308460440712,
+   "click": 0.0573,
+   "f0_hz": 51.64,
+   "f0_early_hz": null,
+   "overtones_db": -26.4,
+   "length_s": 2.0
+  },
+  {
+   "file": "BD2500.WAV",
+   "tone": 2.5,
+   "decay": 0.0,
+   "decay40_s": 0.07493111908527661,
+   "click": 0.0313,
+   "f0_hz": null,
+   "f0_early_hz": null,
+   "overtones_db": null,
+   "length_s": 0.25
+  },
+  {
+   "file": "BD2510.WAV",
+   "tone": 2.5,
+   "decay": 10.0,
+   "decay40_s": 2.512895101272996,
+   "click": 0.0312,
+   "f0_hz": 52.59,
+   "f0_early_hz": null,
+   "overtones_db": -22.7,
+   "length_s": 3.0
+  },
+  {
+   "file": "BD2525.WAV",
+   "tone": 2.5,
+   "decay": 2.5,
+   "decay40_s": 0.2220934538606864,
+   "click": 0.0341,
+   "f0_hz": 50.55,
+   "f0_early_hz": null,
+   "overtones_db": -49.1,
+   "length_s": 0.5
+  },
+  {
+   "file": "BD2550.WAV",
+   "tone": 2.5,
+   "decay": 5.0,
+   "decay40_s": 0.8322916804026136,
+   "click": 0.0327,
+   "f0_hz": 51.04,
+   "f0_early_hz": null,
+   "overtones_db": -34.1,
+   "length_s": 1.5
+  },
+  {
+   "file": "BD2575.WAV",
+   "tone": 2.5,
+   "decay": 7.5,
+   "decay40_s": 1.3620320709831524,
+   "click": 0.0326,
+   "f0_hz": 51.69,
+   "f0_early_hz": null,
+   "overtones_db": -26.6,
+   "length_s": 2.0
+  },
+  {
+   "file": "BD5000.WAV",
+   "tone": 5.0,
+   "decay": 0.0,
+   "decay40_s": 0.074920315068856,
+   "click": 0.0415,
+   "f0_hz": null,
+   "f0_early_hz": null,
+   "overtones_db": null,
+   "length_s": 0.25
+  },
+  {
+   "file": "BD5010.WAV",
+   "tone": 5.0,
+   "decay": 10.0,
+   "decay40_s": 2.509903211248795,
+   "click": 0.0429,
+   "f0_hz": 52.57,
+   "f0_early_hz": null,
+   "overtones_db": -22.5,
+   "length_s": 3.0
+  },
+  {
+   "file": "BD5025.WAV",
+   "tone": 5.0,
+   "decay": 2.5,
+   "decay40_s": 0.22621858386815918,
+   "click": 0.0445,
+   "f0_hz": 50.58,
+   "f0_early_hz": null,
+   "overtones_db": -49.2,
+   "length_s": 0.5
+  },
+  {
+   "file": "BD5050.WAV",
+   "tone": 5.0,
+   "decay": 5.0,
+   "decay40_s": 1.0849993168648664,
+   "click": 0.0428,
+   "f0_hz": 51.17,
+   "f0_early_hz": null,
+   "overtones_db": -30.9,
+   "length_s": 1.5
+  },
+  {
+   "file": "BD5075.WAV",
+   "tone": 5.0,
+   "decay": 7.5,
+   "decay40_s": 1.3688878920875438,
+   "click": 0.043,
+   "f0_hz": 51.67,
+   "f0_early_hz": null,
+   "overtones_db": -26.4,
+   "length_s": 2.0
+  },
+  {
+   "file": "BD7500.WAV",
+   "tone": 7.5,
+   "decay": 0.0,
+   "decay40_s": 0.07355719794145575,
+   "click": 0.0488,
+   "f0_hz": null,
+   "f0_early_hz": null,
+   "overtones_db": null,
+   "length_s": 0.25
+  },
+  {
+   "file": "BD7510.WAV",
+   "tone": 7.5,
+   "decay": 10.0,
+   "decay40_s": 2.506855977799901,
+   "click": 0.0491,
+   "f0_hz": 52.55,
+   "f0_early_hz": null,
+   "overtones_db": -22.5,
+   "length_s": 3.0
+  },
+  {
+   "file": "BD7525.WAV",
+   "tone": 7.5,
+   "decay": 2.5,
+   "decay40_s": 0.22611730742242836,
+   "click": 0.0519,
+   "f0_hz": 50.59,
+   "f0_early_hz": null,
+   "overtones_db": -49.2,
+   "length_s": 0.5
+  },
+  {
+   "file": "BD7550.WAV",
+   "tone": 7.5,
+   "decay": 5.0,
+   "decay40_s": 0.776922963273905,
+   "click": 0.05,
+   "f0_hz": 50.9,
+   "f0_early_hz": null,
+   "overtones_db": -35.4,
+   "length_s": 1.5
+  },
+  {
+   "file": "BD7575.WAV",
+   "tone": 7.5,
+   "decay": 7.5,
+   "decay40_s": 1.3698011239702705,
+   "click": 0.0515,
+   "f0_hz": 51.64,
+   "f0_early_hz": null,
+   "overtones_db": -26.4,
+   "length_s": 2.0
+  }
+ ]
+}
