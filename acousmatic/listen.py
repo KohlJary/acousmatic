@@ -26,6 +26,11 @@ METHODS = {
 }
 
 
+def _spelled_key(kk):
+    _, tonic = harmony.spelling(kk["tonic_pc"], kk["mode"])
+    return f"{tonic} {kk['mode']}"
+
+
 def _bar_of(bars):
     starts = np.array([b["start"] for b in bars])
     def f(t):
@@ -69,6 +74,15 @@ def listen(path, out_dir, keep_stems=False, engrave=True, log=print, offline=Fal
         l["bar"] = bar_of(l["start"])
     log(f"words: {len(wd.get('lines', []))} lines ({wd.get('source')})")
 
+    # spell everything by the key: flats in flat keys, sharps in sharp ones
+    names, tonic = harmony.spelling(k["tonic_pc"], k["mode"])
+    k["tonic"], k["name"] = tonic, f"{tonic} {k['mode']}"
+    for c in spans:
+        if c["root"] is not None:
+            c["name"] = names[c["root"]] + (c["quality"] or "")
+    for n in lead_notes + bass_notes:
+        n["name"] = harmony.note_name(n["midi"], names)
+
     for c in spans:
         c["roman"] = theory.roman(c["root"], c["quality"], k["tonic_pc"], k["mode"])
         c["borrowed"] = theory.borrowed(c["root"], c["quality"], k["tonic_pc"], k["mode"])
@@ -91,10 +105,10 @@ def listen(path, out_dir, keep_stems=False, engrave=True, log=print, offline=Fal
         ss = [c for c in spans if t0 - 1e-3 <= c["start"] < t1 - 1e-3]
         names = [c["roman"] for c in ss]
         s["theory"] = {
-            "key": harmony.key_of(Cs[:, [i for i, t in enumerate(rh.beats[:Cs.shape[1]]) if t0 <= t < t1] or [0]].sum(axis=1))["name"],
+            "key": _spelled_key(harmony.key_of(Cs[:, [i for i, t in enumerate(rh.beats[:Cs.shape[1]]) if t0 <= t < t1] or [0]].sum(axis=1))),
             "loops": theory.loops(names),
             "harmonic_rhythm_beats_per_chord": theory.harmonic_rhythm(ss),
-            "melody": theory.melody([n for n in lead_notes if t0 <= n["start"] < t1], k["tonic_pc"]),
+            "melody": theory.melody([n for n in lead_notes if t0 <= n["start"] < t1], k["tonic_pc"], k["mode"]),
             "syncopation_lead": theory.syncopation([n["g0"] for n in lead_notes if t0 <= n["start"] < t1]),
             "lead_present": bool([n for n in lead_notes if t0 <= n["start"] < t1]),
         }
@@ -116,7 +130,7 @@ def listen(path, out_dir, keep_stems=False, engrave=True, log=print, offline=Fal
         "loudness": sound.loudness(a.stereo),
         "rhythm": {"tempo": rh.tempo, "meter": rh.meter, "meter_contrast": rh.meter_contrast,
                    "downbeat_index": rh.downbeat_index, "beats": [round(float(t), 3) for t in rh.beats],
-                   "bars": bars, "local_tempo": rh.local_tempo,
+                   "bars": bars, "local_tempo": rh.local_tempo, "carried_beats": rh.carried,
                    "tempo_candidates": rh.tempo_candidates},
         "harmony": {"key": k, "mode": mode, "chord_spans": spans,
                     "cadences": theory.cadences(spans, k["tonic_pc"], k["mode"], bar_of)},

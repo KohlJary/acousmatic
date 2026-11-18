@@ -30,6 +30,7 @@ class Rhythm:
     local_tempo: list = field(default_factory=list)
     phase_shifted: bool = False
     tempo_candidates: list = field(default_factory=list)
+    carried: dict = field(default_factory=dict)
 
 
 def _band_onset(y, lo, hi):
@@ -87,7 +88,12 @@ def _track(env):
         if len(bf) < 8:
             continue
         bt = librosa.frames_to_time(bf, sr=SR, hop_length=HOP)
-        real = 60.0 / float(np.median(np.diff(bt)))
+        # the mean of the middle half of the beat intervals: a median of frame-quantised
+        # intervals only resolves the tempo to a couple of percent
+        d = np.diff(bt)
+        med = float(np.median(d))
+        d = d[(d > 0.75 * med) & (d < 1.33 * med)]      # drop skipped or doubled beats only
+        real = 60.0 / float(d.mean())
         prior = float(np.exp(-0.5 * (np.log2(real / 115.0)) ** 2))
         fit = _grid_fit(env, bt)
         rows.append((round(fit * prior, 6), round(fit, 4), round(real, 2), bf))
@@ -102,6 +108,32 @@ def _track(env):
         if k not in seen:
             seen.add(k); cands.append({"bpm": r[2], "grid_fit": r[1], "score": r[0]})
     return best[2], best[3], cands
+
+
+def _carry(beat_frames, mix, floor_db=-45.0):
+    """The beat tracker drops beats where the onsets go quiet (a sparse intro or outro).
+    Carry the established grid on to where the audio starts and stops sounding, and say
+    how many beats were carried rather than tracked."""
+    bf = np.asarray(beat_frames, dtype=int)
+    if len(bf) < 4:
+        return bf, {"before": 0, "after": 0}
+    rms = librosa.feature.rms(y=mix, hop_length=HOP)[0]
+    db = librosa.amplitude_to_db(rms, ref=np.max)
+    sounding = np.where(db > floor_db)[0]
+    if not len(sounding):
+        return bf, {"before": 0, "after": 0}
+    first, last = int(sounding[0]), int(sounding[-1])
+    ibi = float(np.mean(np.diff(bf[-min(len(bf), 33):])))
+    after = []
+    t = bf[-1] + ibi
+    while t <= last - ibi / 2:
+        after.append(int(round(t))); t += ibi
+    ibi0 = float(np.mean(np.diff(bf[:min(len(bf), 33)])))
+    before = []
+    t = bf[0] - ibi0
+    while t >= first - ibi0 / 4 and t >= 0:
+        before.insert(0, int(round(t))); t -= ibi0
+    return np.concatenate([before, bf, after]).astype(int), {"before": len(before), "after": len(after)}
 
 
 def _fix_phase(beat_frames, acc_env, window=16, ratio=1.15):
@@ -148,6 +180,7 @@ def analyse(mix: np.ndarray, drums: np.ndarray) -> Rhythm:
     # window of beats, if they sit on the midpoints rather than the beats, that window
     # moves by half a beat. Then the joins are mended (no doubled or missing beats).
     beat_frames, phase_shifted = _fix_phase(beat_frames, low + mid)
+    beat_frames, carried = _carry(beat_frames, mix)
     beats = librosa.frames_to_time(beat_frames, sr=SR, hop_length=HOP)
     # Downbeat evidence per beat: kick, minus snare (the backbeat marks 2 and 4), plus
     # how much the harmony changes there (chords tend to change on the one).
@@ -205,7 +238,8 @@ def analyse(mix: np.ndarray, drums: np.ndarray) -> Rhythm:
             local.append(round(tempo, 1))
     return Rhythm(tempo=round(tempo, 1), beats=beats, meter=meter, meter_contrast=contrast,
                   downbeat_index=first, bars=bars, local_tempo=local,
-                  phase_shifted=bool(phase_shifted), tempo_candidates=tempo_candidates[:5])
+                  phase_shifted=bool(phase_shifted), tempo_candidates=tempo_candidates[:5],
+                  carried=carried)
 
 
 def grid(rhythm: Rhythm, per_beat: int = 4) -> np.ndarray:

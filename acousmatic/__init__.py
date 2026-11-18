@@ -8,5 +8,5 @@ No language model takes part. Everything is signal processing with fixed paramet
 the same file gives the same record. Each part of the record names the method that
 produced it, and transcriptions say they are transcriptions.
 """
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 SCHEMA = 1

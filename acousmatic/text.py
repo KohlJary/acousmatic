@@ -62,6 +62,10 @@ def render(rec):
     L.append("## At a glance")
     L.append(f"- Length {_mmss(src['duration'])}; {len(rh['bars'])} bars of {rh['meter']}/4 at about {rh['tempo']:.0f} BPM "
              f"(meter call: contrast {rh['meter_contrast'].get(rh['meter'])}; others {rh['meter_contrast']})")
+    cb = rh.get("carried_beats") or {}
+    if cb.get("before") or cb.get("after"):
+        L.append(f"- Beats carried at the established tempo where the onsets were too quiet to track: "
+                 f"{cb.get('before', 0)} at the start, {cb.get('after', 0)} at the end")
     L.append(f"- Key {k['name']} (strength {k['strength']}, runner-up {k['runner_up']}, margin {k['margin']}); "
              f"best-fitting mode {mode['best']} (fit {mode['fit']})")
     L.append(f"- Loudness {lo['integrated_lufs']} LUFS, peak {lo['peak_dbfs']} dBFS, crest {lo['crest_db']} dB")

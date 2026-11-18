@@ -47,6 +47,23 @@ def _templates():
 LABELS, TEMPLATES = _templates()
 
 
+FLATS = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"]
+SHARPS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+MAJOR_TONIC = ["C", "Db", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"]
+MINOR_TONIC = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "G#", "A", "Bb", "B"]
+
+
+def spelling(tonic_pc, mode):
+    """Note names that follow the key signature: flats in flat keys, sharps in sharp ones."""
+    flat = tonic_pc in ({0, 5, 10, 3, 8, 1} if mode == "major" else {9, 2, 7, 0, 5, 10, 3})
+    tonic = (MAJOR_TONIC if mode == "major" else MINOR_TONIC)[tonic_pc]
+    return (FLATS if flat else SHARPS), tonic
+
+
+def note_name(midi, names):
+    return f"{names[midi % 12]}{midi // 12 - 1}"
+
+
 def chord_name(root, q):
     return "N" if root is None else PC[root] + q
 
@@ -110,13 +127,17 @@ def chords(harm, bass, beat_frames, self_prob=0.85):
 def merge(per_beat, beat_times):
     """Consecutive equal chords -> spans [{name, start, end, beats}]."""
     spans = []
+    bt = list(beat_times)
+    ibi = float(np.median(np.diff(bt))) if len(bt) > 1 else 0.5
     for i, c in enumerate(per_beat):
-        t = float(beat_times[i]) if i < len(beat_times) else None
+        # chroma can run a beat past the last tracked beat: extend the grid for it
+        t = float(bt[i]) if i < len(bt) else (bt[-1] + ibi * (i - len(bt) + 1) if bt else 0.0)
         if spans and spans[-1]["name"] == c["name"]:
             spans[-1]["beats"] += 1
         else:
             spans.append({"name": c["name"], "root": c["root"], "quality": c["quality"], "start": round(t, 3), "beats": 1})
     for i, s in enumerate(spans):
-        nxt = spans[i + 1]["start"] if i + 1 < len(spans) else (float(beat_times[-1]) if len(beat_times) else s["start"])
-        s["end"] = round(nxt, 3)
+        nxt = spans[i + 1]["start"] if i + 1 < len(spans) else s["start"] + s["beats"] * ibi
+        s["end"] = round(float(nxt), 3)
+        s["start"] = round(float(s["start"]), 3)
     return spans

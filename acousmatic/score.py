@@ -52,8 +52,8 @@ def build(rec, out: Path):
         if off < 0:
             continue
         try:
-            cs = harmony.ChordSymbol(c["name"].replace("Eb", "E-").replace("Ab", "A-").replace("Bb", "B-")
-                                     .replace("maj7", "maj7"))
+            import re as _re
+            cs = harmony.ChordSymbol(_re.sub(r"^([A-G])b", r"\1-", c["name"]))
             cs.writeAsChord = False
             lead.insert(float(off), cs)
         except Exception:
@@ -61,7 +61,7 @@ def build(rec, out: Path):
     for p in (lead, bass):
         p.insert(0, m21meter.TimeSignature(f"{meter}/4"))
         k = rec["harmony"]["key"]
-        p.insert(0, m21key.Key(k["tonic"].replace("b", "-") if len(k["tonic"]) > 1 else k["tonic"],
+        p.insert(0, m21key.Key(k["tonic"][0] + k["tonic"][1:].replace("b", "-"),
                                "minor" if k["mode"] == "minor" else "major"))
     lead.insert(0, m21tempo.MetronomeMark(number=round(rec["rhythm"]["tempo"])))
     for p in (lead, bass):

@@ -117,15 +117,16 @@ def loops(names, max_len=8, min_reps=2):
     return found
 
 
-def melody(notes, tonic_pc):
+def melody(notes, tonic_pc, mode="minor"):
     if not notes:
         return None
     midis = [n["midi"] for n in notes]
     steps = np.diff(midis)
     degs = Counter(DEGREE_NAMES[(m - tonic_pc) % 12] for m in midis)
-    import librosa
+    from .harmony import note_name, spelling
+    names = spelling(tonic_pc, mode)[0]
     return {
-        "range": f"{librosa.midi_to_note(min(midis), unicode=False)}–{librosa.midi_to_note(max(midis), unicode=False)}",
+        "range": f"{note_name(min(midis), names)}–{note_name(max(midis), names)}",
         "span_semitones": int(max(midis) - min(midis)),
         "stepwise_share": round(float(np.mean(np.abs(steps) <= 2)), 3) if len(steps) else None,
         "leaps": int(np.sum(np.abs(steps) >= 5)) if len(steps) else 0,
