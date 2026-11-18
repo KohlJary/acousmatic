@@ -97,7 +97,14 @@ def render(rec):
              f"best-fitting mode {mode['best']} (fit {mode['fit']})")
     L.append(harmony_line)
     L.append(f"- Loudness {lo['integrated_lufs']} LUFS, peak {lo['peak_dbfs']} dBFS, crest {lo['crest_db']} dB")
-    L.append(f"- Form: {' '.join(s['label'] for s in rec['form']['sections'])}")
+    secs = rec["form"]["sections"]
+    if secs and "role" in secs[0]:
+        L.append("- Form: " + " · ".join(f"{s['role']} {s['bars']}{'~' if s.get('phrase') == 'irregular' else ''}"
+                                        for s in secs) + f" (bars; ~ = not a whole 4-bar phrase; section types "
+                 f"{' '.join(s['label'] for s in secs)}; roles are inferred from repetition and loudness, "
+                 "with confidence per section below)")
+    else:
+        L.append(f"- Form: {' '.join(s['label'] for s in secs)}")
     lg = rec["form"].get("large") or []
     if lg:
         L.append("- Large-scale form: " + ", ".join(f"{s['label']} bars {s['start_bar']}–{s['end_bar']}" for s in lg))
@@ -120,7 +127,8 @@ def render(rec):
     rows = {r["n"]: r for r in _bar_rows(rec)}
     for s in rec["form"]["sections"]:
         snd = s["sound"] or {}
-        L.append(f"## {s['label']} · bars {s['start_bar']}–{s['end_bar']} · {_mmss(s['start'])}–{_mmss(s['end'])}")
+        role = f" ({s['role']}, {s.get('role_confidence', 'low')} confidence)" if s.get("role") else ""
+        L.append(f"## {s['label']}{role} · bars {s['start_bar']}–{s['end_bar']} · {_mmss(s['start'])}–{_mmss(s['end'])}")
         th = s["theory"]
         bits = [f"key here {th['key']}"]
         if th["harmonic_rhythm_beats_per_chord"]:

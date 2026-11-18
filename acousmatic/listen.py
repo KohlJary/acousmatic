@@ -61,7 +61,14 @@ def listen(path, out_dir, keep_stems=False, engrave=True, log=print, offline=Fal
     log(f"harmony: {k['name']}, {len(spans)} chord spans")
 
     secs, form_info = form.sections(mix, beat_frames, bars, rh.beats)
-    log(f"form: {''.join(s['label'] for s in secs)}")
+    secs = form.snap_phrases(secs, len(bars))
+    mono_all = mix.mean(axis=0) if mix.ndim > 1 else mix
+    def _sec_energy(s):
+        t0, t1 = bars[s["start_bar"] - 1]["start"], bars[min(s["end_bar"], len(bars)) - 1]["end"]
+        seg = mono_all[int(t0 * SR): int(t1 * SR)]
+        return float(20 * np.log10(np.sqrt(np.mean(seg ** 2)) + 1e-12)) if len(seg) else -120.0
+    secs = form.roles(secs, [_sec_energy(s) for s in secs])
+    log(f"form: {''.join(s['label'] for s in secs)} = {form.form_line(secs)}")
 
     lead_notes, lead_voiced = notes.lead_line(st.lead, grid)
     bass_notes, _ = notes.bass_line(st.bass, grid)
