@@ -42,7 +42,7 @@ def listen(path, out_dir, keep_stems=False, engrave=True, log=print, offline=Fal
     t_start = time.time()
     out = Path(out_dir); out.mkdir(parents=True, exist_ok=True)
     (out / "images").mkdir(exist_ok=True)
-    a = audio.load(path)
+    a = path if isinstance(path, audio.Audio) else audio.load(path)
     log(f"decoded {a.duration:.0f}s")
     st = stems.separate(a.stereo)
     log("stems")
@@ -169,3 +169,15 @@ def listen(path, out_dir, keep_stems=False, engrave=True, log=print, offline=Fal
     (out / "record.md").write_text(render(rec))
     log(f"done in {rec['elapsed_s']}s -> {out}")
     return rec
+
+
+def listen_audio(stereo, out_dir, meta=None, log=print, engrave=False):
+    """A full listen to a song held in memory (live ears' full record): no file in, none
+    written; the audio goes when this returns."""
+    import hashlib
+    meta = dict(meta or {})
+    h = hashlib.sha256(np.ascontiguousarray(stereo[:, : audio.SR_HI * 30]).tobytes()).hexdigest()
+    name = meta.get("title") or "live"
+    a = audio.Audio(path=Path(f"live/{name}"), stereo=np.asarray(stereo, dtype=np.float32), sr=audio.SR_HI,
+                    sha256=h, tags=meta)
+    return listen(a, out_dir, engrave=engrave, log=log)
