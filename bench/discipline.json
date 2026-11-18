@@ -1,3 +1,3 @@
-{"name": "NIN - Discipline", "dir": "/home/jaryk/acousmatic-data/slip/Discipline/Discipline Multi-Tracks/Audio Files",
- "midi": "/home/jaryk/acousmatic-data/slip/Discipline/Discipline Multi-Tracks/Discipline Markers and Tempo.mid",
+{"name": "NIN - Discipline", "dir": "$ACOUSMATIC_DATA/slip/Discipline/Discipline Multi-Tracks/Audio Files",
+ "midi": "$ACOUSMATIC_DATA/slip/Discipline/Discipline Multi-Tracks/Discipline Markers and Tempo.mid",
  "roles": {"lead": ["Discipline Lead.flac"], "bass": ["Discipline Bass.flac"], "drums": ["Discipline Drums.flac", "Discipline Perc.flac"]}}

@@ -3,6 +3,7 @@ name = "acousmatic"
 version = "0.1.0"
 description = "Deterministic listening: turn a recorded song into a time-ordered record of what is heard in it."
 requires-python = ">=3.11"
+license = "MIT"
 dependencies = ["numpy", "scipy", "librosa>=1.0", "soundfile", "pyloudnorm", "music21", "matplotlib", "scikit-learn"]
 
 [project.scripts]

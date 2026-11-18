@@ -7,6 +7,8 @@ The mix is the sum of the stems, so it lines up with them exactly. Truth:
   score measures what the mix and the separation cost (not the detectors themselves).
 
 Usage: python bench/multitrack.py SONG.json [--out DIR]
+Get the multitracks from https://archive.org/details/NineInchNails-TheSlipMulti-trackStems
+and unpack them under $ACOUSMATIC_DATA/slip/<Song>/ (see bench/*.json).
 SONG.json: {"name", "dir", "midi", "roles": {"lead": [...], "bass": [...], "drums": [...]}, "beats_per_bar": 4}
 """
 from __future__ import annotations
@@ -68,7 +70,15 @@ def notes_f(ref, est):
     return {"p": round(p, 3), "r": round(r, 3), "f": round(f, 3), "ref_notes": len(ref), "est_notes": len(est)}
 
 
+def _expand(cfg):
+    """Paths in a song file may start with $ACOUSMATIC_DATA (default ~/acousmatic-data)."""
+    import os
+    base = os.environ.get("ACOUSMATIC_DATA", str(Path.home() / "acousmatic-data"))
+    return {k: (v.replace("$ACOUSMATIC_DATA", base) if isinstance(v, str) else v) for k, v in cfg.items()}
+
+
 def run(cfg):
+    cfg = _expand(cfg)
     d = Path(cfg["dir"])
     files = sorted(p.name for p in d.iterdir() if p.suffix.lower() == ".flac")
     roles = {k: v for k, v in cfg["roles"].items()}
