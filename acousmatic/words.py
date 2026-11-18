@@ -60,6 +60,28 @@ def parse(lrc: str):
     return lines
 
 
+def word_times(lyricsfile: str):
+    """LRCLIB's word sync (its 'lyricsfile', YAML): per line, each word's start. None if absent."""
+    if not lyricsfile:
+        return None
+    try:
+        import yaml
+        doc = yaml.safe_load(lyricsfile)
+    except Exception:
+        return None
+    out = []
+    for ln in (doc or {}).get("lines") or []:
+        ws = [{"text": str(w.get("text", "")).strip(), "start": w["start_ms"] / 1000.0}
+              for w in ln.get("words") or [] if "start_ms" in w]
+        if not ws:
+            continue
+        end = (ln.get("end_ms") or 0) / 1000.0 or None
+        for i, w in enumerate(ws):
+            w["end"] = ws[i + 1]["start"] if i + 1 < len(ws) else (end or w["start"] + 0.5)
+        out.append({"text": str(ln.get("text", "")).strip(), "start": ln["start_ms"] / 1000.0, "words": ws})
+    return out or None
+
+
 def align(lines, lead, sr, max_shift=2.0, step=0.05):
     """The offset (seconds) that best lines up 'a line is being sung' with the lead's energy."""
     if not lines or lead is None or not len(lead):
@@ -95,11 +117,21 @@ def words(tags: dict, duration: float, sha: str, lead=None, sr=None, offline=Fal
     if got.get("instrumental"):
         return {"source": "lrclib", "instrumental": True, "lines": []}
     lines = parse(got.get("syncedLyrics") or "")
+    wt = word_times(got.get("lyricsfile") or "")
+    if wt:
+        # word timings exist: attach each line's words (matched by start time)
+        for l in lines:
+            m = min(wt, key=lambda x: abs(x["start"] - l["start"]))
+            if abs(m["start"] - l["start"]) < 0.6:
+                l["words"] = [dict(w) for w in m["words"]]
     if not lines:
         return {"source": "lrclib (unsynced)", "lines": [], "plain": got.get("plainLyrics") or ""}
     off = align(lines, lead, sr) if lead is not None else 0.0
     for l in lines:
         l["start"] = round(l["start"] + off, 2)
         l["end"] = round(l["end"] + off, 2)
-    return {"source": "lrclib (published, synced)", "offset_s": off, "lines": lines,
+        for w in l.get("words", []):
+            w["start"], w["end"] = round(w["start"] + off, 3), round(w["end"] + off, 3)
+    return {"source": "lrclib (published, synced" + (", word by word)" if any(l.get("words") for l in lines) else ")"),
+            "offset_s": off, "lines": lines,
             "release": {"artist": got.get("artistName"), "album": got.get("albumName"), "duration": got.get("duration")}}

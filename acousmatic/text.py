@@ -41,6 +41,17 @@ def _bar_rows(rec):
             if hits:
                 dr.append(f"{mark} " + "".join(mark if i in hits else "." for i in range(g1 - g0)))
         wl = " / ".join(l["text"] for l in rec.get("words", {}).get("lines", []) if b["start"] - 1e-3 <= l["start"] < b["end"] - 1e-3)
+        # word by word, where each is sung (counting syllables), when the timing is published
+        grid_t = rec.get("_grid")
+        if grid_t is not None:
+            import numpy as _np
+            # a word belongs to the bar its nearest 16th falls in (one sung just before the
+            # downbeat is on the next bar's 1)
+            ww = [(w, int(_np.argmin(_np.abs(grid_t - w["start"]))))
+                  for l in rec.get("words", {}).get("lines", []) for w in l.get("words", [])]
+            ww = [(w, g) for w, g in ww if g0 <= g < g1]
+            if ww:
+                wl = " ".join(f"{w['text']}@{_pos(g, g0)}" for w, g in ww)
         rows.append({"n": b["n"], "start": b["start"], "chords": chords, "lead": ln, "bass": bs,
                      "drums": " | ".join(dr), "words": wl})
     return rows
@@ -48,6 +59,14 @@ def _bar_rows(rec):
 
 def render(rec):
     src, rh, h = rec["source"], rec["rhythm"], rec["harmony"]
+    if "_grid" not in rec:
+        import numpy as _np
+        b = _np.array(rh["beats"])
+        if len(b) > 1:
+            ibi = float(_np.median(_np.diff(b)))
+            ext = _np.concatenate([[b[0] - ibi], b, [b[-1] + ibi]])
+            rec = dict(rec, _grid=_np.concatenate([_np.linspace(ext[i], ext[i + 1], 4, endpoint=False)
+                                                   for i in range(len(ext) - 1)] + [[ext[-1]]]))
     t = src["tags"]
     L = []
     L.append(f"# {t.get('title', src['file'])}")
