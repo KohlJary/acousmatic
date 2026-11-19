@@ -53,7 +53,7 @@ That listens to whatever the computer is playing (the system output, through Pul
 
 No audio gets written anywhere. It sits in memory as long as the listening needs it, then it's gone. `--full` holds the whole song in memory until it ends, runs the complete listen on it, and then drops it. Same rule both ways: a record, never a copy. `--file song.flac` plays a file at real speed instead, and `--events` prints each second as a JSON line.
 
-It hears less than the full listen does, because it only gets the song once, in order, the way you do. On the song we checked it against, it landed the same key and tempo as the full listen. Chord by chord, it's rougher. Treat it as a first listen.
+It hears less than the full listen does, because it only gets the song once, in order, the way you do. `bench/live.py` measures how much less, on two songs from *The Slip*: it lands the full listen's tempo on both, the key on one (on the other it hears the relative major, same notes, wrong home), and the same chord root about two seconds in three (69% and 63%). The exact chord matches far less often (36% and 42%); most of the misses are in the extensions, like a seventh the full listen didn't hear. The full listen isn't ground truth for chords either. Treat it as a first listen. Numbers in [bench/RESULTS.md](bench/RESULTS.md).
 
 ## How good is it
 

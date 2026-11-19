@@ -27,7 +27,9 @@ from .audio import SR, SR_HI
 
 HOP = 512
 STEP_S = 1.0          # how often the ears report
-WIN_S = 8.0           # what they look back over for tempo and turns
+WIN_S = 8.0           # the audio they hold, for chords and turns
+TEMPO_LOOK_S = 30.0   # the onset envelope the tempo is judged over
+TEMPO_MIN_S = 12.0    # no tempo said before this much has been heard
 TURN_GAP_S = 8.0      # sections shorter than this aren't called
 
 
@@ -45,6 +47,11 @@ class LiveEars:
         self.feats: List[np.ndarray] = []  # per-second timbre+harmony vectors, for turns
         self.turns: List[float] = [0.0]
         self.tempos: List[float] = []
+        # Onset strength, kept as the song plays: numbers, not audio. The tempo is judged
+        # on it the way the full listen judges it (rhythm._track). An 8 s beat_track leaned
+        # on librosa's 120 BPM prior and said 123 for a song at 91 (bench/live.py).
+        self.env_mix: List[np.ndarray] = []
+        self.env_perc: List[np.ndarray] = []
         self.last_chord: Optional[int] = None
         self.bass_sum = np.zeros(12)
 
@@ -64,6 +71,30 @@ class LiveEars:
                 self.ring_n -= len(self.ring.popleft())
             self.t += STEP_S
             self._second(chunk)
+
+    # -- tempo, from the onsets heard so far ---------------------------------------
+    def _keep_onsets(self, win: np.ndarray) -> None:
+        n = int(round(STEP_S * SR / HOP))
+        seg = win[-int(min(len(win), 4 * SR)):]     # some context before the new second
+        perc = librosa.effects.percussive(seg, margin=1.0)
+        self.env_mix.append(librosa.onset.onset_strength(y=seg, sr=SR, hop_length=HOP,
+                                                         aggregate=np.median)[-n:])
+        self.env_perc.append(librosa.onset.onset_strength(y=perc, sr=SR, hop_length=HOP)[-n:])
+
+    def _tempo(self, look_s: Optional[float]) -> Optional[float]:
+        from .rhythm import _track
+        if not self.env_mix:
+            return None
+        m, p = np.concatenate(self.env_mix), np.concatenate(self.env_perc)
+        if look_s:
+            k = int(look_s * SR / HOP)
+            m, p = m[-k:], p[-k:]
+        env = m / (m.max() + 1e-9) + p / (p.max() + 1e-9)    # as rhythm.analyze combines them
+        try:
+            tempo = float(_track(env)[0])
+        except Exception:
+            return None
+        return tempo if tempo > 0 else None
 
     # -- one second of listening ------------------------------------------------
     def _second(self, chunk: np.ndarray) -> None:
@@ -107,11 +138,13 @@ class LiveEars:
         ev["key_so_far"] = key["name"]
         cen = librosa.feature.spectral_centroid(y=chunk, sr=SR)
         ev["brightness_hz"] = int(np.median(cen))
-        if len(win) >= 4 * SR:
-            tempo = float(np.atleast_1d(librosa.beat.beat_track(y=win, sr=SR, hop_length=HOP)[0])[0])
-            if tempo > 0:
+        self._keep_onsets(win)
+        if self.t >= TEMPO_MIN_S and int(self.t) % 2 == 0:
+            tempo = self._tempo(TEMPO_LOOK_S)
+            if tempo:
                 self.tempos.append(tempo)
-                ev["tempo"] = round(float(np.median(self.tempos[-12:])), 1)
+        if self.tempos:
+            ev["tempo"] = round(self.tempos[-1], 1)
         # what this second sounds like, for noticing when the music turns
         mf = librosa.feature.mfcc(y=chunk, sr=SR, n_mfcc=13).mean(axis=1)
         self.feats.append(np.concatenate([mf / (np.linalg.norm(mf) + 1e-9), c_now / (np.linalg.norm(c_now) + 1e-9),
@@ -138,7 +171,8 @@ class LiveEars:
         meta = meta or {}
         sounding = [e for e in self.events if not e.get("silent")]
         dur = self.t
-        tempo = round(float(np.median(self.tempos)), 1) if self.tempos else None
+        whole = self._tempo(None) if self.t >= TEMPO_MIN_S else None   # the whole song's onsets
+        tempo = round(whole, 1) if whole else (round(self.tempos[-1], 1) if self.tempos else None)
         if not sounding:
             secs_note = "nothing was playing"
         key = harmony.key_of(self.chroma_sum, bass_weights=self.bass_sum) if self.chroma_sum.any() else None

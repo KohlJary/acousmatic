@@ -20,3 +20,17 @@ Letting You is tracked at double time (182.1 against 91), so its bars are half b
 Chords have no ground truth here (the multitracks carry no chord charts). Each chord in a record carries how well it fits its template, and the record says what share of the song's harmony read clearly; on dense, distorted rock that share can be low.
 
 Where it stands: time (tempo, beats, bars) and drums are usable; form is fair; bass lines are rough; the lead (vocal) line and the stems themselves are the weak part, as expected for DSP separation on a dense mix. 0 dB SNR means a stem carries as much of the rest of the mix as of its own part.
+
+## Live ears against the full listen
+
+Measured by `bench/live.py`: the live ears hear the file once, in order (run as fast as it decodes; the same code as real time), and are compared with the full listen of the same file. The full listen isn't ground truth for chords, so this measures what hearing the song once, in order, gives up. Chord agreement is per second.
+
+| | NIN - Discipline | NIN - Letting You |
+|---|---|---|
+| key, full / live | Eb minor / Eb minor | Bb minor / C# major (relative major) |
+| tempo, full / live | 122.2 / 122.3 | 182.3 / 182.7 (both double time; true 91) |
+| chord root agrees | 0.691 | 0.632 |
+| exact chord agrees | 0.355 | 0.417 |
+| seconds compared | 259 | 228 |
+
+The live tempo used to come from an 8-second beat tracker that leaned on librosa's 120 BPM prior, and said 123 for both songs; it's now judged the full listen's way, on the onset envelope heard so far. The live ears run at about 2.5x real time on one desktop CPU (Ryzen 7 5800X).
