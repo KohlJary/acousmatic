@@ -41,6 +41,20 @@ Anything ffmpeg can read works. You need ffmpeg, plus LilyPond if you want the e
 
 You get `record.md` (read it top to bottom), `record.json` (everything), `images/`, `score.musicxml`, `transcription.mid`, `score-page*.png`, and with `--stems`, the separated parts.
 
+## Live
+
+A file on disk isn't how people hear most music. You hear it as it plays, once, in order, and it's gone. So the ears do that too.
+
+```
+acousmatic live -o records/now --follow-player
+```
+
+That listens to whatever the computer is playing (the system output, through PulseAudio or PipeWire with `parec`), names the song from the media player (`playerctl`), and stops when the track changes. Every second it says what's happening now: the chord, the key so far, the tempo, how loud and bright it is, and when the song turns a corner into a new section. When the song ends you get a light record: the form with its roles, key, tempo, the chord timeline, the sound over time.
+
+No audio gets written anywhere. It sits in memory as long as the listening needs it, then it's gone. `--full` holds the whole song in memory until it ends, runs the complete listen on it, and then drops it. Same rule both ways: a record, never a copy. `--file song.flac` plays a file at real speed instead, and `--events` prints each second as a JSON line.
+
+It hears less than the full listen does, because it only gets the song once, in order, the way you do. On the song we checked it against, it landed the same key and tempo as the full listen. Chord by chord, it's rougher. Treat it as a first listen.
+
 ## How good is it
 
 Measured, not vibed. Nine Inch Nails put out the multitracks for *The Slip* under Creative Commons, so I can sum the stems into a mix, run the ears on it, and check the answers against the real parts and the songs' own tempo and marker files. `bench/multitrack.py` does it, and the numbers are in [bench/RESULTS.md](bench/RESULTS.md).
